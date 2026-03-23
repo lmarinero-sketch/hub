@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import {
   fetchManagedSystems, fetchSystemUsers, fetchSystemRoles,
-  toggleSystemUser, createAdmQuiUser, createEnfermeriaUser,
+  toggleSystemUser, createAdmQuiUser, createEnfermeriaUser, createRRHHUser,
   updateSystemUser,
   type SystemInfo, type SystemUser, type SystemRole,
 } from '../services/userManagementService';
@@ -93,6 +93,7 @@ function CreateUserModal({ system, roles, onClose, onCreated }: {
   const [form, setForm] = useState({
     usuario: '', nombre: '', apellido: '', email: '', password: '',
     iniciales: '', rol: roles.find(r => r.es_default)?.nombre || '',
+    cargo: '', sector: ''
   });
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -116,6 +117,13 @@ function CreateUserModal({ system, roles, onClose, onCreated }: {
           return;
         }
         await createEnfermeriaUser(form.nombre, form.apellido, form.email, form.password, form.rol);
+      } else if (system.nombre === 'rrhh-organigrama') {
+        if (!form.nombre || !form.apellido || !form.email || !form.password) {
+          setError('Nombre, apellido, email y contraseña son obligatorios');
+          setSaving(false);
+          return;
+        }
+        await createRRHHUser(form.email, form.nombre, form.apellido, form.password, form.cargo, form.sector);
       }
       onCreated();
       onClose();
@@ -265,6 +273,60 @@ function CreateUserModal({ system, roles, onClose, onCreated }: {
                     <option key={r.id} value={r.nombre}>{r.display_name}</option>
                   ))}
                 </select>
+              </div>
+            </>
+          )}
+
+          {system.nombre === 'rrhh-organigrama' && (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={labelStyle}>Nombre</label>
+                  <input
+                    style={inputStyle}
+                    value={form.nombre}
+                    onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
+                    placeholder="Juan"
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Apellido</label>
+                  <input
+                    style={inputStyle}
+                    value={form.apellido}
+                    onChange={e => setForm(f => ({ ...f, apellido: e.target.value }))}
+                    placeholder="Pérez"
+                  />
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Email Oficial</label>
+                <input
+                  style={inputStyle}
+                  value={form.email}
+                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                  placeholder="jperez@sanatorioargentino.com.ar"
+                />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={labelStyle}>Sector (Opcional)</label>
+                  <input
+                    style={inputStyle}
+                    value={form.sector}
+                    onChange={e => setForm(f => ({ ...f, sector: e.target.value }))}
+                    placeholder="Ej: Administración"
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Cargo (Opcional)</label>
+                  <input
+                    style={inputStyle}
+                    value={form.cargo}
+                    onChange={e => setForm(f => ({ ...f, cargo: e.target.value }))}
+                    placeholder="Ej: Gerente"
+                  />
+                </div>
               </div>
             </>
           )}

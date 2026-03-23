@@ -59,7 +59,7 @@ export const SYSTEM_CONFIG: Record<string, Partial<SystemInfo>> = {
     isReadOnly: false,
   },
   'rrhh-organigrama': {
-    canCreate: false,   // Usa Supabase Auth → se crea desde Supabase dashboard
+    canCreate: true,   // Desbloqueado: Crear perfiles directos para DB central
     canEdit: false,
     canToggle: true,
     isReadOnly: false,
@@ -179,6 +179,30 @@ export async function createEnfermeriaUser(
     p_email: email,
     p_password: password,
     p_rol: rol,
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Crea un usuario principal de RRHH
+ */
+export async function createRRHHUser(
+  email: string,
+  nombre: string,
+  apellido: string,
+  password: string,
+  cargo?: string,
+  sector?: string
+): Promise<string> {
+  const { data, error } = await supabase.rpc('hub_create_rrhh_user', {
+    p_email: email,
+    p_nombre: nombre,
+    p_apellido: apellido,
+    p_password: password,
+    p_cargo: cargo || null,
+    p_sector: sector || null
   });
 
   if (error) throw error;
