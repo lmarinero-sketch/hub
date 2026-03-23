@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Shield, MapPin, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Loader2, AlertCircle, MapPin } from 'lucide-react';
+import './LoginPage.css';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -32,59 +33,60 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="login-page">
-      <div className="login-card">
-        <div className="login-card__logo">
-          <Shield size={32} color="white" />
+    <div className="login-container-clean">
+      <div className="login-card-clean">
+        <div className="text-center">
+          <div className="login-logo-box">
+            <img src="/logosanatorio.png" alt="Sanatorio Argentino" className="login-logo-img" />
+          </div>
+          <h2 className="login-title-clean">Hub Sanatorio Argentino</h2>
+          <p className="login-subtitle-clean">Portal centralizado de acceso institucional</p>
         </div>
 
-        <h1 className="login-card__title">Hub Sanatorio Argentino</h1>
-        <p className="login-card__subtitle">Portal centralizado de acceso institucional</p>
-
         {error && (
-          <div className="alert alert--error">
-            <AlertCircle size={16} />
-            <span>{error}</span>
+          <div className="login-error-banner">
+            <AlertCircle className="login-error-icon" />
+            <p>{error}</p>
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label" htmlFor="login-email">
-              Correo electrónico
-            </label>
-            <input
-              id="login-email"
-              type="email"
-              className="form-input"
-              placeholder="usuario@sanatorioargentino.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
-              autoComplete="email"
-              required
-            />
+        <form onSubmit={handleSubmit} className="login-form-space">
+          <div className="input-group-clean">
+            <label className="input-label-text">Correo electrónico</label>
+            <div className="input-wrapper">
+              <input
+                type="email"
+                required
+                className="input-field-clean"
+                placeholder="usuario@sanatorioargentino.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+                autoComplete="email"
+              />
+              <Mail className="input-icon-clean" />
+            </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="login-password">
-              Contraseña
-            </label>
-            <input
-              id="login-password"
-              type="password"
-              className="form-input"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
-              autoComplete="current-password"
-              required
-            />
+          <div className="input-group-clean">
+            <label className="input-label-text">Contraseña</label>
+            <div className="input-wrapper">
+              <input
+                type="password"
+                required
+                className="input-field-clean"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+                autoComplete="current-password"
+              />
+              <Lock className="input-icon-clean" />
+            </div>
           </div>
 
           {geoStatus !== 'idle' && (
-            <div className={`geo-status geo-status--${geoStatus === 'requesting' ? 'requesting' : geoStatus === 'granted' ? 'granted' : 'denied'}`}>
+            <div className={`geo-status-clean geo-status-clean--${geoStatus}`}>
               {geoStatus === 'requesting' && (
                 <>
                   <Loader2 size={16} className="spinner" style={{ border: 'none', animation: 'spin 0.6s linear infinite' }} />
@@ -106,34 +108,20 @@ export default function LoginPage() {
             </div>
           )}
 
-          <div style={{ marginTop: '24px' }}>
-            <button
-              type="submit"
-              className="btn btn--primary btn--full"
-              disabled={isLoading || !email.trim() || !password.trim()}
-            >
-              {isLoading ? (
-                <>
-                  <div className="spinner" />
-                  Ingresando...
-                </>
-              ) : (
-                <>
-                  <Shield size={18} />
-                  Ingresar al Hub
-                </>
-              )}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={isLoading || !email.trim() || !password.trim()}
+            className="submit-btn-clean"
+          >
+            {isLoading ? (
+              <Loader2 className="w-6 h-6 animate-spin" />
+            ) : (
+              'Iniciar Sesión'
+            )}
+          </button>
         </form>
 
-        <p style={{
-          textAlign: 'center',
-          fontSize: '11px',
-          color: 'var(--sa-slate-400)',
-          marginTop: '24px',
-          lineHeight: '1.5',
-        }}>
+        <p className="login-disclaimer">
           <MapPin size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
           Se requiere permiso de ubicación para ingresar.
           <br />

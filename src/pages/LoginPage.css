@@ -1,0 +1,199 @@
+/* Estética Limpia y Clínica (Sanatorio Argentino) */
+
+.login-container-clean {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.login-card-clean {
+  width: 100%;
+  max-width: 28rem;
+  background-color: #ffffff;
+  border-radius: 1.5rem; /* rounded-3xl */
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f3f4f6; /* border-gray-100 */
+  padding: 2rem 2.5rem;
+  animation: scaleIn 0.5s ease both;
+  z-index: 10;
+  position: relative;
+}
+
+.login-logo-box {
+  width: 5rem;
+  height: 5rem;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid #f3f4f6;
+}
+
+.login-logo-img {
+  width: 3.5rem;
+  height: 3.5rem;
+  object-fit: contain;
+}
+
+.login-title-clean {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937; /* gray-800 */
+  margin-bottom: 0.5rem;
+}
+
+.login-subtitle-clean {
+  font-size: 0.875rem;
+  color: #6b7280; /* gray-500 */
+  margin-top: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.login-error-banner {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #fef2f2;
+  border: 1px solid #fee2e2;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  color: #b91c1c;
+  font-size: 0.875rem;
+  animation: slideInLeft 0.4s ease both;
+}
+
+.login-error-icon {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.login-form-space {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.input-group-clean {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.input-label-text {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #64748b; /* slate-500 */
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+  margin-left: 0.25rem;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.input-icon-clean {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #d1d5db; /* gray-300 */
+  width: 1.25rem;
+  height: 1.25rem;
+  pointer-events: none;
+}
+
+.input-field-clean {
+  width: 100%;
+  padding: 1rem;
+  padding-left: 3.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background-color: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: all 0.3s;
+  outline: none;
+  color: #334155;
+  font-weight: 500;
+}
+
+.input-field-clean:focus {
+  background-color: #ffffff;
+  border-color: var(--sa-primary);
+  box-shadow: 0 0 0 4px rgba(0, 84, 139, 0.1);
+}
+
+.submit-btn-clean {
+  width: 100%;
+  padding: 1rem 0;
+  background-color: var(--sa-primary);
+  color: #ffffff;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  font-size: 1.125rem;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 84, 139, 0.2), 0 4px 6px -2px rgba(0, 84, 139, 0.1);
+  border: none;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.submit-btn-clean:hover:not(:disabled) {
+  background-color: var(--sa-primary-hover);
+}
+
+.submit-btn-clean:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.geo-status-clean {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.geo-status-clean--requesting {
+  background-color: #eff6ff; /* blue-50 */
+  color: var(--sa-primary);
+  border: 1px solid rgba(0, 84, 139, 0.1);
+}
+
+.geo-status-clean--granted {
+  background-color: #f0fdf4; /* green-50 */
+  color: #16a34a; /* green-600 */
+  border: 1px solid rgba(34, 197, 94, 0.15);
+}
+
+.geo-status-clean--denied {
+  background-color: #fef2f2; /* red-50 */
+  color: #dc2626; /* red-600 */
+  border: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+.login-disclaimer {
+  text-align: center;
+  font-size: 0.6875rem;
+  color: #94a3b8; /* slate-400 */
+  margin-top: 1.5rem;
+  line-height: 1.5;
+}

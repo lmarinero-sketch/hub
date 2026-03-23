@@ -85,11 +85,16 @@ BEGIN
     -- Si encontró el perfil, usar ese user_id
     IF v_auth_user_id IS NOT NULL THEN
       -- Verificar que existe en auth.users (FK)
-      NULL; -- ya lo tenemos
+      NULL; -- ya lo tenemos por la relacion
     ELSE
-      -- UUID válido pero sin perfil → usar el UUID directamente
-      -- (existe en auth.users aunque no tenga perfil en hub)
-      v_auth_user_id := v_uuid_attempt;
+      -- UUID válido pero sin perfil -> Verificar si existe en auth.users
+      IF EXISTS (SELECT 1 FROM auth.users WHERE id = v_uuid_attempt) THEN
+        v_auth_user_id := v_uuid_attempt;
+      ELSE
+        -- No existe en auth.users, dejarlo como NULL para evitar error de foreign key
+        v_auth_user_id := NULL;
+        v_uuid_attempt := NULL; -- Para que pase al PASO B
+      END IF;
     END IF;
   EXCEPTION WHEN OTHERS THEN
     -- No es un UUID → es un username (ADM-QUI, Enfermería)
