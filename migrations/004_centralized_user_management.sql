@@ -88,7 +88,7 @@ ALTER TABLE hub_usuario_sistemas
   ADD COLUMN IF NOT EXISTS rol_sistema_id UUID REFERENCES hub_roles_sistema(id);
 
 -- -----------------------------------------------
--- PASO 4: RPC — Crear usuario en ADM-QUI desde el Hub
+-- PASO 4: RPC — Crear usuario en ADM-QUI desde el Hub (Identidad Unificada)
 -- -----------------------------------------------
 CREATE OR REPLACE FUNCTION hub_create_admqui_user(
   p_usuario TEXT,
@@ -102,7 +102,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_new_id UUID;
+  v_new_id UUID := gen_random_uuid();
   v_sistema_id UUID;
   v_default_rol_sistema UUID;
   v_default_rol_hub UUID;
@@ -117,17 +117,36 @@ BEGIN
     RAISE EXCEPTION 'Unauthorized';
   END IF;
 
-  -- Crear en admqui_usuarios
-  INSERT INTO admqui_usuarios (usuario, nombre, password_hash, iniciales)
+  -- 1. Crear identidad central (auth.users)
+  -- Como es SECURITY DEFINER, podemos escribir en auth.users
+  INSERT INTO auth.users (
+    id, instance_id, aud, role, email, encrypted_password, 
+    email_confirmed_at, recovery_sent_at, last_sign_in_at, 
+    raw_app_meta_data, raw_user_meta_data, created_at, updated_at, 
+    confirmation_token, email_change, email_change_token_new, recovery_token
+  ) VALUES (
+    v_new_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 
+    LOWER(TRIM(p_usuario)) || '@sanatorioargentino.com.ar', 
+    crypt(p_password, gen_salt('bf')), now(), null, null, 
+    '{"provider":"email","providers":["email"]}', '{}', now(), now(), 
+    '', '', '', ''
+  );
+
+  -- 2. Crear perfil central en el Hub
+  INSERT INTO hub_perfiles (user_id, display_name, activo)
+  VALUES (v_new_id, TRIM(p_nombre), true);
+
+  -- 3. Crear en admqui_usuarios (forzando el mismo ID)
+  INSERT INTO admqui_usuarios (id, usuario, nombre, password_hash, iniciales)
   VALUES (
+    v_new_id,
     LOWER(TRIM(p_usuario)),
     TRIM(p_nombre),
     crypt(p_password, gen_salt('bf')),
     COALESCE(p_iniciales, UPPER(LEFT(TRIM(p_nombre), 1)))
-  )
-  RETURNING id INTO v_new_id;
+  );
 
-  -- Registrar en hub_usuario_sistemas
+  -- 4. Registrar en hub_usuario_sistemas
   SELECT id INTO v_sistema_id FROM hub_sistemas WHERE nombre = 'adm-qui';
   SELECT id INTO v_default_rol_sistema FROM hub_roles_sistema 
     WHERE sistema_id = v_sistema_id AND es_default = true LIMIT 1;
@@ -136,16 +155,15 @@ BEGIN
   INSERT INTO hub_usuario_sistemas (
     user_id, sistema_id, rol_id, rol_sistema_id, asignado_por, activo
   ) VALUES (
-    -- Usamos un UUID "virtual" basado en el ID de admqui_usuarios
     v_new_id, v_sistema_id, v_default_rol_hub, v_default_rol_sistema, auth.uid(), true
-  ) ON CONFLICT (user_id, sistema_id) DO UPDATE SET activo = true;
+  );
 
   RETURN v_new_id;
 END;
 $$;
 
 -- -----------------------------------------------
--- PASO 5: RPC — Crear usuario en Enfermería desde el Hub
+-- PASO 5: RPC — Crear usuario en Enfermería desde el Hub (Identidad Unificada)
 -- -----------------------------------------------
 CREATE OR REPLACE FUNCTION hub_create_enfermeria_user(
   p_nombre TEXT,
@@ -160,7 +178,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_new_id UUID;
+  v_new_id UUID := gen_random_uuid();
   v_sistema_id UUID;
   v_rol_sistema UUID;
   v_default_rol_hub UUID;
@@ -175,18 +193,35 @@ BEGIN
     RAISE EXCEPTION 'Unauthorized';
   END IF;
 
-  -- Crear en enf_usuarios
-  INSERT INTO enf_usuarios (nombre, apellido, email, password_hash, rol)
+  -- 1. Crear identidad central (auth.users)
+  INSERT INTO auth.users (
+    id, instance_id, aud, role, email, encrypted_password, 
+    email_confirmed_at, raw_app_meta_data, raw_user_meta_data, 
+    created_at, updated_at, confirmation_token, email_change, 
+    email_change_token_new, recovery_token
+  ) VALUES (
+    v_new_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 
+    LOWER(TRIM(p_email)), 
+    crypt(p_password, gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{}', 
+    now(), now(), '', '', '', ''
+  );
+
+  -- 2. Crear perfil central en el Hub
+  INSERT INTO hub_perfiles (user_id, display_name, activo)
+  VALUES (v_new_id, TRIM(p_nombre) || ' ' || TRIM(p_apellido), true);
+
+  -- 3. Crear en enf_usuarios (forzando el mismo ID)
+  INSERT INTO enf_usuarios (id, nombre, apellido, email, password_hash, rol)
   VALUES (
+    v_new_id,
     TRIM(p_nombre),
     TRIM(p_apellido),
     LOWER(TRIM(p_email)),
-    p_password,  -- Enfermería usa plain text actualmente
+    p_password,  -- Enfermería usa plain text actualmente, o se asume así
     p_rol
-  )
-  RETURNING id INTO v_new_id;
+  );
 
-  -- Registrar en hub_usuario_sistemas
+  -- 4. Registrar en hub_usuario_sistemas
   SELECT id INTO v_sistema_id FROM hub_sistemas WHERE nombre = 'enfermeria';
   SELECT id INTO v_rol_sistema FROM hub_roles_sistema 
     WHERE sistema_id = v_sistema_id AND nombre = p_rol LIMIT 1;
@@ -196,14 +231,14 @@ BEGIN
     user_id, sistema_id, rol_id, rol_sistema_id, asignado_por, activo
   ) VALUES (
     v_new_id, v_sistema_id, v_default_rol_hub, v_rol_sistema, auth.uid(), true
-  ) ON CONFLICT (user_id, sistema_id) DO UPDATE SET activo = true;
+  );
 
   RETURN v_new_id;
 END;
 $$;
 
 -- -----------------------------------------------
--- PASO 6: RPC — Listar usuarios de un sistema específico
+-- PASO 6: RPC — Listar usuarios de un sistema específico (Unificado)
 -- -----------------------------------------------
 CREATE OR REPLACE FUNCTION hub_list_system_users(p_sistema_nombre TEXT)
 RETURNS TABLE (
@@ -236,74 +271,81 @@ BEGIN
 
   SELECT id INTO v_sistema_id FROM hub_sistemas WHERE nombre = p_sistema_nombre;
 
+  -- AHORA TODOS LOS USUARIOS LISTADOS PROVIENEN DE hub_perfiles DE FORMA CENTRAL!
+  -- Devolvemos los que SÍ tienen acceso explícito o existían en la tabla legada.
+  
   IF p_sistema_nombre = 'adm-qui' THEN
     RETURN QUERY
     SELECT 
-      au.id AS user_id,
-      au.usuario AS username,
-      au.nombre AS display_name,
-      NULL::TEXT AS email,
+      COALESCE(au.id, hp.user_id) AS user_id,
+      COALESCE(au.usuario, u.email) AS username,
+      COALESCE(hp.display_name, au.nombre) AS display_name,
+      u.email::TEXT,
       'usuario'::TEXT AS rol,
-      au.activo,
+      COALESCE(au.activo, true) AS activo,
       au.ultimo_login,
-      au.created_at,
-      COALESCE(hus.activo, true) AS hub_access_enabled
-    FROM admqui_usuarios au
-    LEFT JOIN hub_usuario_sistemas hus ON hus.user_id = au.id AND hus.sistema_id = v_sistema_id
-    ORDER BY au.nombre;
+      COALESCE(hp.created_at, au.created_at),
+      COALESCE(hus.activo, false) AS hub_access_enabled
+    FROM hub_perfiles hp
+    JOIN auth.users u ON u.id = hp.user_id
+    LEFT JOIN hub_usuario_sistemas hus ON hus.user_id = hp.user_id AND hus.sistema_id = v_sistema_id
+    LEFT JOIN admqui_usuarios au ON au.id = hp.user_id
+    WHERE hus.id IS NOT NULL OR au.id IS NOT NULL
+    ORDER BY hp.display_name;
 
   ELSIF p_sistema_nombre = 'enfermeria' THEN
     RETURN QUERY
     SELECT 
-      eu.id AS user_id,
-      eu.email AS username,
-      (eu.nombre || ' ' || eu.apellido) AS display_name,
-      eu.email,
-      eu.rol,
-      eu.activo,
+      COALESCE(eu.id, hp.user_id) AS user_id,
+      COALESCE(eu.email, u.email) AS username,
+      COALESCE(hp.display_name, eu.nombre || ' ' || eu.apellido) AS display_name,
+      COALESCE(eu.email, u.email)::TEXT,
+      COALESCE(eu.rol, 'enfermero') AS rol,
+      COALESCE(eu.activo, true) AS activo,
       NULL::TIMESTAMPTZ AS ultimo_login,
-      eu.created_at,
-      COALESCE(hus.activo, true) AS hub_access_enabled
-    FROM enf_usuarios eu
-    LEFT JOIN hub_usuario_sistemas hus ON hus.user_id = eu.id AND hus.sistema_id = v_sistema_id
-    ORDER BY eu.nombre;
+      COALESCE(hp.created_at, eu.created_at),
+      COALESCE(hus.activo, false) AS hub_access_enabled
+    FROM hub_perfiles hp
+    JOIN auth.users u ON u.id = hp.user_id
+    LEFT JOIN hub_usuario_sistemas hus ON hus.user_id = hp.user_id AND hus.sistema_id = v_sistema_id
+    LEFT JOIN enf_usuarios eu ON eu.id = hp.user_id
+    WHERE hus.id IS NOT NULL OR eu.id IS NOT NULL
+    ORDER BY hp.display_name;
 
   ELSIF p_sistema_nombre = 'contact-center' THEN
-    -- CC usa Supabase Auth en OTRO proyecto → no podemos leer desde acá
-    -- Retornamos solo lo que tenemos registrado en hub_usuario_sistemas
     RETURN QUERY
     SELECT 
-      hus.user_id,
-      hp.email AS username,
-      COALESCE(hp.display_name, hp.email) AS display_name,
-      hp.email,
+      hp.user_id,
+      u.email::TEXT AS username,
+      hp.display_name,
+      u.email::TEXT,
       COALESCE(hrs.nombre, 'agente') AS rol,
-      hus.activo,
+      COALESCE(hus.activo, false) AS activo,
       NULL::TIMESTAMPTZ AS ultimo_login,
-      hus.created_at,
-      hus.activo AS hub_access_enabled
-    FROM hub_usuario_sistemas hus
-    LEFT JOIN hub_perfiles hp ON hp.user_id = hus.user_id
+      hp.created_at,
+      COALESCE(hus.activo, false) AS hub_access_enabled
+    FROM hub_perfiles hp
+    JOIN auth.users u ON u.id = hp.user_id
+    JOIN hub_usuario_sistemas hus ON hus.user_id = hp.user_id AND hus.sistema_id = v_sistema_id
     LEFT JOIN hub_roles_sistema hrs ON hrs.id = hus.rol_sistema_id
-    WHERE hus.sistema_id = v_sistema_id
     ORDER BY hp.display_name;
 
   ELSIF p_sistema_nombre = 'rrhh-organigrama' THEN
-    -- RRHH usa Supabase Auth en la misma DB
     RETURN QUERY
     SELECT 
-      au.id AS user_id,
-      au.email::TEXT AS username,
-      COALESCE(hp.display_name, split_part(au.email::TEXT, '@', 1)) AS display_name,
-      au.email::TEXT,
+      hp.user_id,
+      u.email::TEXT AS username,
+      hp.display_name,
+      u.email::TEXT,
       'usuario'::TEXT AS rol,
-      COALESCE(hp.activo, true) AS activo,
-      au.last_sign_in_at AS ultimo_login,
-      au.created_at,
-      COALESCE(hus.activo, true) AS hub_access_enabled
-    FROM auth.users au
-    LEFT JOIN hub_perfiles hp ON hp.user_id = au.id
-    LEFT JOIN hub_usuario_sistemas hus ON hus.user_id = au.id AND hus.sistema_id = v_sistema_id
+      hp.activo,
+      u.last_sign_in_at AS ultimo_login,
+      hp.created_at,
+      COALESCE(hus.activo, false) AS hub_access_enabled
+    FROM hub_perfiles hp
+    JOIN auth.users u ON u.id = hp.user_id
+    LEFT JOIN hub_usuario_sistemas hus ON hus.user_id = hp.user_id AND hus.sistema_id = v_sistema_id
+    WHERE hus.id IS NOT NULL
     ORDER BY hp.display_name NULLS LAST;
 
   END IF;
@@ -311,7 +353,7 @@ END;
 $$;
 
 -- -----------------------------------------------
--- PASO 7: RPC — Activar/desactivar usuario en un sistema
+-- PASO 7: RPC — Activar/desactivar usuario en un sistema (Unificado)
 -- -----------------------------------------------
 CREATE OR REPLACE FUNCTION hub_toggle_system_user(
   p_target_user_id UUID,
@@ -338,21 +380,49 @@ BEGIN
 
   SELECT id INTO v_sistema_id FROM hub_sistemas WHERE nombre = p_sistema_nombre;
 
-  -- Sistemas con auth propia: actualizar SOLO en su tabla
-  -- (sus UUIDs NO están en auth.users → FK impide usar hub_usuario_sistemas)
+  -- 1. Si el usuario NO existe en auth.users (ej: usuario legado de ADM-QUI), lo CREAMOS al vuelo
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE id = p_target_user_id) THEN
+    DECLARE
+      v_leg_email TEXT := 'usuario_legado_' || replace(p_target_user_id::text, '-', '') || '@sanatorioargentino.com.ar';
+      v_leg_name TEXT := 'Usuario Legado';
+    BEGIN
+      -- Intentar sacar datos de admqui
+      IF p_sistema_nombre = 'adm-qui' THEN
+         SELECT COALESCE(nombre, 'Usuario de Quirófano'), COALESCE(usuario, 'q_user') || '@sanatorioargentino.com.ar' 
+         INTO v_leg_name, v_leg_email FROM admqui_usuarios WHERE id = p_target_user_id;
+      ELSIF p_sistema_nombre = 'enfermeria' THEN
+         SELECT COALESCE(nombre || ' ' || apellido, 'Usuario de Enfermería'), COALESCE(email, v_leg_email) 
+         INTO v_leg_name, v_leg_email FROM enf_usuarios WHERE id = p_target_user_id;
+      END IF;
+
+      -- Insertar identidad dummy en auth.users para satisfacer la FK
+      INSERT INTO auth.users (
+        id, instance_id, aud, role, email, encrypted_password, 
+        email_confirmed_at, raw_app_meta_data, raw_user_meta_data, 
+        created_at, updated_at
+      ) VALUES (
+        p_target_user_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 
+        LOWER(TRIM(v_leg_email)), crypt('legacy_password_reset_needed', gen_salt('bf')), now(), 
+        '{"provider":"email","providers":["email"]}', '{}', now(), now()
+      );
+
+      -- Insertar en hub_perfiles
+      INSERT INTO hub_perfiles (user_id, display_name, activo)
+      VALUES (p_target_user_id, v_leg_name, true);
+    END;
+  END IF;
+
+  -- 2. Actualizar el activo del sistema si el usuario ya existe ahí
   IF p_sistema_nombre = 'adm-qui' THEN
     UPDATE admqui_usuarios SET activo = p_activo, updated_at = now()
     WHERE id = p_target_user_id;
-    RETURN;
 
   ELSIF p_sistema_nombre = 'enfermeria' THEN
     UPDATE enf_usuarios SET activo = p_activo, updated_at = now()
     WHERE id = p_target_user_id;
-    RETURN;
   END IF;
 
-  -- Sistemas con Supabase Auth (CC, RRHH, Calidad): usar hub_usuario_sistemas
-  -- (sus UUIDs SÍ están en auth.users)
+  -- 3. Actualizar/Insertar en hub_usuario_sistemas 
   UPDATE hub_usuario_sistemas
   SET activo = p_activo
   WHERE user_id = p_target_user_id AND sistema_id = v_sistema_id;
@@ -406,6 +476,10 @@ BEGIN
       password_hash = CASE WHEN p_password IS NOT NULL THEN crypt(p_password, gen_salt('bf')) ELSE password_hash END,
       updated_at = now()
     WHERE id = p_target_user_id;
+    -- Actualizar perfil hub también
+    IF p_nombre IS NOT NULL THEN
+      UPDATE hub_perfiles SET display_name = p_nombre WHERE user_id = p_target_user_id;
+    END IF;
 
   ELSIF p_sistema_nombre = 'enfermeria' THEN
     UPDATE enf_usuarios SET
@@ -420,6 +494,16 @@ BEGIN
       rol = COALESCE(p_rol, rol),
       password_hash = COALESCE(p_password, password_hash),
       updated_at = now()
+    WHERE id = p_target_user_id;
+    -- Actualizar perfil hub
+    IF p_nombre IS NOT NULL THEN
+      UPDATE hub_perfiles SET display_name = p_nombre WHERE user_id = p_target_user_id;
+    END IF;
+  END IF;
+
+  -- Actualizar contraseña en auth.users si se provee
+  IF p_password IS NOT NULL THEN
+    UPDATE auth.users SET encrypted_password = crypt(p_password, gen_salt('bf'))
     WHERE id = p_target_user_id;
   END IF;
 
