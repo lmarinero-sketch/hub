@@ -17,7 +17,11 @@ export async function fetchAuthorizedSystems(userId: string): Promise<Authorized
   }
 
   return (data || [])
-    .filter((row: HubUsuarioSistema) => row.hub_sistemas?.activo)
+    .filter((row: HubUsuarioSistema) => {
+      if (!row.hub_sistemas?.activo) return false;
+      if (['liquidaciones', 'osptxt'].includes(row.hub_sistemas.nombre)) return false;
+      return true;
+    })
     .map((row: HubUsuarioSistema) => ({
       sistema: row.hub_sistemas!,
       rol: row.hub_roles!,

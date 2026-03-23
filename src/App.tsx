@@ -7,9 +7,10 @@ import AdminPage from './pages/AdminPage';
 import MonitorPage from './pages/MonitorPage';
 import PortfolioPage from './pages/PortfolioPage';
 import DocumentationPage from './pages/DocumentationPage';
+import UserManagementPage from './pages/UserManagementPage';
 import {
   LayoutGrid, UserCog, Eye, Briefcase, LogOut,
-  LogIn, Menu, X, BookOpen, Shield,
+  LogIn, Menu, X, BookOpen, Shield, Users,
 } from 'lucide-react';
 import { initScreenshotGuard, updateScreenshotGuardUser, destroyScreenshotGuard } from './lib/screenshotGuard';
 import './index.css';
@@ -23,6 +24,7 @@ function Navbar() {
   const navItems = [
     { to: '/', label: 'Dashboard', icon: LayoutGrid, always: true },
     { to: '/admin', label: 'Administración', icon: UserCog, show: isGlobalAdmin || isRRHH },
+    { to: '/usuarios', label: 'Usuarios', icon: Users, show: isGlobalAdmin || isTyS || isRRHH },
     { to: '/monitor', label: 'Monitor', icon: Eye, show: isTyS },
     { to: '/portfolio', label: 'Portfolio', icon: Briefcase, show: isTyS || isRRHH },
     { to: '/docs', label: 'Documentación', icon: BookOpen, show: isTyS || isRRHH },
@@ -173,6 +175,9 @@ function AppLayout() {
           <Route path="/" element={<DashboardPage />} />
           {(isGlobalAdmin || isRRHH) && (
             <Route path="/admin" element={<AdminPage />} />
+          )}
+          {(isGlobalAdmin || isTyS || isRRHH) && (
+            <Route path="/usuarios" element={<UserManagementPage />} />
           )}
           {isTyS && (
             <Route path="/monitor" element={<MonitorPage />} />
