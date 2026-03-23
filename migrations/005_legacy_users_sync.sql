@@ -199,7 +199,7 @@ BEGIN
       COALESCE(hp.display_name, au.nombre) AS display_name,
       u.email::TEXT,
       'usuario'::TEXT AS rol,
-      COALESCE(au.activo, true) AS activo,
+      COALESCE(hus.activo, au.activo, false) AS activo,
       au.ultimo_login,
       COALESCE(hp.created_at, au.created_at),
       COALESCE(hus.activo, false) AS hub_access_enabled
@@ -218,7 +218,7 @@ BEGIN
       COALESCE(hp.display_name, eu.nombre || ' ' || eu.apellido) AS display_name,
       COALESCE(eu.email, u.email)::TEXT,
       COALESCE(eu.rol, 'enfermero') AS rol,
-      COALESCE(eu.activo, true) AS activo,
+      COALESCE(hus.activo, eu.activo, false) AS activo,
       NULL::TIMESTAMPTZ AS ultimo_login,
       COALESCE(hp.created_at, eu.created_at),
       COALESCE(hus.activo, false) AS hub_access_enabled
@@ -344,10 +344,11 @@ BEGIN
   WHERE user_id = p_target_user_id AND sistema_id = v_sistema_id;
 
   IF NOT FOUND THEN
-    INSERT INTO hub_usuario_sistemas (user_id, sistema_id, rol_id, activo, asignado_por)
+    INSERT INTO hub_usuario_sistemas (user_id, sistema_id, rol_id, rol_sistema_id, activo, asignado_por)
     VALUES (
       p_target_user_id, v_sistema_id,
       (SELECT id FROM hub_roles WHERE nombre = 'usuario' LIMIT 1),
+      (SELECT id FROM hub_roles_sistema WHERE sistema_id = v_sistema_id AND es_default = true LIMIT 1),
       p_activo, auth.uid()
     )
     ON CONFLICT (user_id, sistema_id) DO UPDATE SET activo = p_activo;
