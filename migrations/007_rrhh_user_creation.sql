@@ -44,7 +44,7 @@ BEGIN
   ) VALUES (
     v_new_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 
     LOWER(TRIM(p_email)), 
-    crypt(p_password, gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{}', 
+    extensions.crypt(p_password, extensions.gen_salt('bf'::text)), now(), '{"provider":"email","providers":["email"]}', '{}', 
     now(), now(), '', '', '', ''
   );
 
