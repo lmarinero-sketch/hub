@@ -387,8 +387,9 @@ export default function UserManagementPage() {
 
   const filteredUsers = users.filter(u => {
     const term = searchTerm.toLowerCase();
+    const displayName = u.display_name || u.username || 'Usuario';
     return (
-      u.display_name.toLowerCase().includes(term) ||
+      displayName.toLowerCase().includes(term) ||
       (u.username || '').toLowerCase().includes(term) ||
       (u.email || '').toLowerCase().includes(term)
     );
@@ -582,7 +583,7 @@ export default function UserManagementPage() {
                             color: 'white', fontSize: '13px', fontWeight: 800,
                             fontFamily: 'var(--font-display)', flexShrink: 0,
                           }}>
-                            {user.display_name.split(/[\s@]/).filter(Boolean).map(w => w[0]).join('').substring(0, 2).toUpperCase()}
+                            {(user.display_name || user.username || 'U').split(/[\s@]/).filter(Boolean).map(w => w[0]).join('').substring(0, 2).toUpperCase()}
                           </div>
 
                           {/* Info */}
@@ -592,7 +593,7 @@ export default function UserManagementPage() {
                                 fontSize: '14px', fontWeight: 700, fontFamily: 'var(--font-display)',
                                 color: user.activo ? 'var(--sa-slate-900)' : 'var(--sa-slate-500)',
                               }}>
-                                {user.display_name}
+                                {user.display_name || user.username || 'Usuario Sin Nombre'}
                               </span>
                               <span style={{
                                 fontSize: '10px', fontWeight: 700,
