@@ -47,7 +47,7 @@ BEGIN
   ) VALUES (
     v_new_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 
     LOWER(TRIM(p_usuario)) || '@sanatorioargentino.com.ar', 
-    crypt(p_password, gen_salt('bf')), now(), null, null, 
+    extensions.crypt(p_password, extensions.gen_salt('bf'::text)), now(), null, null, 
     '{"provider":"email","providers":["email"]}', '{}', now(), now(), 
     '', '', '', ''
   );
@@ -62,7 +62,7 @@ BEGIN
     v_new_id,
     LOWER(TRIM(p_usuario)),
     TRIM(p_nombre),
-    crypt(p_password, gen_salt('bf')),
+    extensions.crypt(p_password, extensions.gen_salt('bf'::text)),
     COALESCE(p_iniciales, UPPER(LEFT(TRIM(p_nombre), 1)))
   );
 
@@ -122,7 +122,7 @@ BEGIN
   ) VALUES (
     v_new_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 
     LOWER(TRIM(p_email)), 
-    crypt(p_password, gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{}', 
+    extensions.crypt(p_password, extensions.gen_salt('bf'::text)), now(), '{"provider":"email","providers":["email"]}', '{}', 
     now(), now(), '', '', '', ''
   );
 
@@ -319,7 +319,7 @@ BEGIN
         created_at, updated_at
       ) VALUES (
         p_target_user_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 
-        LOWER(TRIM(v_leg_email)), crypt('legacy_password_reset_needed', gen_salt('bf')), now(), 
+        LOWER(TRIM(v_leg_email)), extensions.crypt('legacy_password_reset_needed', extensions.gen_salt('bf'::text)), now(), 
         '{"provider":"email","providers":["email"]}', '{}', now(), now()
       );
 
