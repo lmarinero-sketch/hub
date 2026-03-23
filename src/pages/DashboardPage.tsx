@@ -3,7 +3,7 @@ import { logSessionEvent } from '../services/auditService';
 import {
   ExternalLink, ArrowRight, Activity, ShieldCheck,
   BarChart3, Users, ClipboardList, Stethoscope,
-  MonitorSmartphone, Phone, FileText, Building2,
+  MonitorSmartphone, Phone, FileText, Building2, Mic,
 } from 'lucide-react';
 
 // Map icon names to components
@@ -18,6 +18,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
   'building-2': Building2,
   'activity': Activity,
   'shield-check': ShieldCheck,
+  'mic': Mic,
 };
 
 export default function DashboardPage() {

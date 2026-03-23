@@ -5,7 +5,7 @@ import {
   Briefcase, ExternalLink, CheckCircle,
   XCircle, Loader2, MonitorSmartphone,
   ClipboardList, BarChart3, Users, Stethoscope,
-  Phone, FileText, Building2, Activity, ShieldCheck
+  Phone, FileText, Building2, Activity, ShieldCheck, Mic
 } from 'lucide-react';
 
 const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
@@ -19,6 +19,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
   'building-2': Building2,
   'activity': Activity,
   'shield-check': ShieldCheck,
+  'mic': Mic,
 };
 
 export default function PortfolioPage() {
