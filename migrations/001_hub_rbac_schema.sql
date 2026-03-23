@@ -96,7 +96,8 @@ INSERT INTO hub_sistemas (nombre, display_name, descripcion, url, icono, color) 
   ('contact-center', 'Contact Center', 'Analytics de conversaciones y gestión de tickets', 'https://contactcenter.sanatorioargentino.com', 'phone', '#f59e0b'),
   ('liquidaciones', 'Liquidaciones', 'Administración de guardias y liquidaciones de personal', 'https://liquidaciones.sanatorioargentino.com', 'file-text', '#16a34a'),
   ('rrhh-organigrama', 'Organigrama Digital', 'Visualización interactiva de la estructura institucional', 'https://organigrama.sanatorioargentino.com', 'building-2', '#64748b'),
-  ('osptxt', 'OSP-TXT', 'Gestión de prestaciones y obras sociales', 'https://osptxt.sanatorioargentino.com', 'bar-chart-3', '#dc2626')
+  ('osptxt', 'OSP-TXT', 'Gestión de prestaciones y obras sociales', 'https://osptxt.sanatorioargentino.com', 'bar-chart-3', '#dc2626'),
+  ('transcriptor', 'Transcriptor IA', 'Transcripción y análisis de reuniones con IA — Resumen, actas y presentaciones automáticas', 'https://reuniones-psi.vercel.app', 'mic', '#00548B')
 ON CONFLICT (nombre) DO NOTHING;
 
 -- ==========================================
