@@ -70,6 +70,12 @@ export const SYSTEM_CONFIG: Record<string, Partial<SystemInfo>> = {
     canToggle: true,    // Solo bloquear acceso
     isReadOnly: true,
   },
+  'recepciones': {
+    canCreate: true,
+    canEdit: true,
+    canToggle: true,
+    isReadOnly: false,
+  },
 };
 
 // Sistemas que NO gestionamos (excluir del panel)
